@@ -2,19 +2,58 @@
 
 
 ## Loading and preprocessing the data
-
+```{r}
+unzip("activity.zip")
+activity <- read.csv("activity.csv")
+```
 
 
 ## What is mean total number of steps taken per day?
+```{r}
+steps_by_date <- aggregate(steps ~ date, data = activity, FUN = sum)
+barplot(steps_by_date$steps, names.arg=steps_by_date$date, xlab="Date", ylab="Number of steps")
+```
 
-
+```{r}
+mean(steps_by_date$steps)
+median(steps_by_date$steps)
+```
 
 ## What is the average daily activity pattern?
-
+```{r}
+steps_by_interval <- aggregate(steps ~ interval, data = activity, FUN = mean)
+plot(steps_by_interval, type="l",xlab="Interval", ylab="Number of steps")
+```
 
 
 ## Imputing missing values
+```{r}
+sum(is.na(activity))
+```
 
+```{r}
+na_indexes <- is.na(activity$steps)
+activity_merged <- merge(activity, steps_by_interval, by="interval")
+activity$steps[na_indexes] <- activity_merged$steps.y[na_indexes]
+```
 
+```{r}
+steps_by_date <- aggregate(steps ~ date, data = activity, FUN = sum)
+barplot(steps_by_date$steps, names.arg=steps_by_date$date, xlab="Date", ylab="Number of steps")
+mean(steps_by_date$steps)
+median(steps_by_date$steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+Sys.setlocale("LC_TIME", "en_US")
+
+activity$weekday_type <- as.factor(ifelse(weekdays(as.Date(activity$date)) %in% c("Saturday", "Sunday"),"weekend","weekday"))
+```
+
+```{r}
+steps_weekday_type <- aggregate(steps ~ interval + weekday_type, data=activity, FUN=mean)
+
+library("lattice")
+xyplot(steps_weekday_type$steps ~ steps_weekday_type$interval | steps_weekday_type$weekday_type, type = "l", layout = c(1,2),xlab="Interval", ylab="Number of steps")
+```
